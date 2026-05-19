@@ -2,7 +2,7 @@
 
 ![HeaderProbe](headerprobe.png)
 
-A Python CLI tool for analyzing HTTP security headers. It checks for missing headers, validates their directives, inspects cookies, and can also probe TLS certificates and HTTP methods. Useful for developers and security researchers auditing sites they own or have permission to test.
+A Python CLI tool for analyzing HTTP security headers. It checks for missing headers, validates their directives, inspects cookies, and also probe TLS certificates and HTTP methods. Useful for developers and security researchers auditing sites they own or have permission to test.
 
 ---
 
