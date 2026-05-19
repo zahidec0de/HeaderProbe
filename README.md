@@ -117,12 +117,6 @@ HeaderProbe checks cookies at the HTTP level, including cookies set during redir
 
 ---
 
-## Ethical use
-
-Only use HeaderProbe on domains you own or have explicit written permission to test.
-
----
-
 ## License
 
 MIT
