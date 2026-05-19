@@ -1,16 +1,49 @@
-# HeaderProbe
+# HeaderProbe v2.0
 
-A Python script that analyzes HTTP security headers and cookie security flags on domains you own or have permission to test. Useful for researchers and developers to quickly assess how well a site protects its visitors.
+![HeaderProbe](headerprobe.png)
+
+A Python CLI tool for analyzing HTTP security headers. It checks for missing headers, validates their directives, inspects cookies, and can also probe TLS certificates and HTTP methods. Useful for developers and security researchers auditing sites they own or have permission to test.
+
+---
 
 ## What it does
 
-- Checks for missing and misconfigured security headers
-- Analyzes cookies for Secure, HttpOnly, and SameSite flags
-- Collects cookies from the full redirect chain, not just the final response
-- Detects information leakage headers (Server, X-Powered-By, etc.)
-- Gives a security score out of 100 with a grade (A to D)
-- Tries multiple connection strategies automatically to handle SSL and redirect issues
-- Shows all raw response headers
+### Security header analysis
+Detects present, missing, and deprecated headers. Goes further than just checking if a header exists — it reads the values and flags invalid or misconfigured directives. Also detects headers that expose server information unnecessarily.
+
+### Directive validation
+
+| Header | What gets validated |
+|---|---|
+| `Strict-Transport-Security` | Non-integer `max-age`, age under 1 day, missing `includeSubDomains`, `preload` without `includeSubDomains`, unknown directives |
+| `Content-Security-Policy` | Unknown or duplicate directives, `unsafe-inline`, `unsafe-eval`, wildcard sources, malformed nonces/hashes, missing `base-uri` and `object-src`, deprecated directives |
+| `X-Frame-Options` | Deprecated `ALLOWFROM`, any value other than `DENY` or `SAMEORIGIN` |
+| `Referrer-Policy` | Invalid values, weak values like `unsafe-url` |
+| `Permissions-Policy` | Malformed `feature=allowlist` syntax, unknown features, wildcard grants |
+| `Cache-Control` | Directives that wrongly carry values (e.g. `no-store=0`), non-integer `max-age`, duplicate directives |
+| `X-XSS-Protection` | Outdated `1; mode=block` with an explanation of what to use instead |
+| `Cross-Origin-Opener-Policy` | Invalid values, weak `unsafe-none` |
+| `Cross-Origin-Embedder-Policy` | Invalid values, weak `unsafe-none` |
+| `Cross-Origin-Resource-Policy` | Invalid values, risky `cross-origin` |
+
+### Cookie security
+Checks `Secure`, `HttpOnly`, and `SameSite` flags. Collects cookies from every step in the redirect chain, not just the final response. Flags `SameSite=None` without `Secure`, missing explicit `SameSite` declarations, and unknown cookie directives.
+
+### HTTP probing
+Tries multiple connection strategies automatically: HTTPS, HTTPS without SSL verification, HTTP, and the `www.` variant. Uses realistic browser headers so servers that filter basic script requests respond normally. Reports response time in milliseconds.
+
+### TLS certificate inspection (`--ssl`)
+Shows the subject, issuer, expiry date, days until expiry, TLS protocol version, cipher suite, and all Subject Alternative Names.
+
+### HTTP method probing (`--methods`)
+Tests GET, POST, HEAD, OPTIONS, PUT, DELETE, PATCH, and TRACE. Flags methods that are enabled but should be blocked.
+
+### Other features
+- DNS resolution for IPv4 and IPv6 (`--dns`)
+- Scan multiple domains at once and get a comparison table (`--compare`)
+- Full JSON report output for scripting or logging (`--json`)
+
+---
 
 ## Requirements
 
@@ -18,30 +51,92 @@ A Python script that analyzes HTTP security headers and cookie security flags on
 pip install requests
 ```
 
+Python 3.8 or later. No other dependencies.
+
+---
+
 ## Usage
 
 ```bash
+# Basic scan
 python3 headerprobe.py example.com
-```
 
-Or run without arguments and enter the domain when prompted:
+# All probes enabled
+python3 headerprobe.py example.com --ssl --dns --methods --verbose
 
-```bash
+# Compare multiple targets
+python3 headerprobe.py --compare site1.com site2.com site3.com
+
+# JSON output
+python3 headerprobe.py example.com --json > report.json
+
+# No color, useful for saving output to a file
+python3 headerprobe.py example.com --no-color | tee scan.txt
+
+# Run without arguments to be prompted for a domain
 python3 headerprobe.py
 ```
 
+---
+
+## Flags
+
+| Flag | Short | Description |
+|---|---|---|
+| `--ssl` | `-s` | Inspect the TLS certificate |
+| `--dns` | `-d` | Resolve A and AAAA DNS records |
+| `--methods` | `-m` | Probe HTTP methods and flag dangerous ones |
+| `--verbose` | `-v` | Show extra notes on directive checks |
+| `--show-all-headers` | | Print all raw response headers |
+| `--json` | | Output the full report as JSON |
+| `--compare` | | Scan multiple targets and compare scores |
+| `--timeout` | `-t` | Request timeout in seconds (default: 12) |
+| `--no-color` | | Disable ANSI colors |
+
+---
+
 ## Headers checked
 
-Strict-Transport-Security, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection, Cache-Control, Cross-Origin-Opener-Policy, Cross-Origin-Resource-Policy
+High severity: Strict-Transport-Security, Content-Security-Policy
 
-## Cookie flags checked
+Medium severity: X-Frame-Options, X-Content-Type-Options, Permissions-Policy, Cross-Origin-Opener-Policy, Cross-Origin-Resource-Policy, Cross-Origin-Embedder-Policy
 
-Secure, HttpOnly, SameSite
+Low severity: Referrer-Policy, X-XSS-Protection, Cache-Control, Clear-Site-Data
+
+Deprecated (flagged separately): Expect-CT, Feature-Policy
+
+Information leakage: Server, X-Powered-By, X-AspNet-Version, X-AspNetMvc-Version, X-Generator, X-Drupal-Cache, X-Varnish, Via, X-Backend-Server, X-Forwarded-For, X-Forwarded-Host, X-CF-Powered-By, X-OWA-Version, MicrosoftSharePointTeamServices, X-Content-Encoded-By, Liferay-Portal
+
+---
+
+## Scoring
+
+Each present header earns points based on severity: HIGH = 30, MEDIUM = 15, LOW = 5. Penalties are applied for information-leaking headers (-5 each), directive errors (-3 each), and deprecated headers (-2 each).
+
+| Score | Grade |
+|---|---|
+| 90-100 | A+ |
+| 80-89 | A |
+| 70-79 | B+ |
+| 60-69 | B |
+| 50-59 | C |
+| 40-49 | D |
+| Below 40 | F |
+
+---
 
 ## Note on cookie detection
 
-HeaderProbe checks cookies at the HTTP level, including those set across redirect chains. Cookies injected by JavaScript after the page loads (such as those from Google or Cloudflare scripts) are not visible at the HTTP level and cannot be detected by any HTTP-based tool.
+HeaderProbe checks cookies at the HTTP level, including cookies set during redirects. Cookies set by JavaScript after the page loads are not visible at the HTTP level and cannot be detected by any HTTP-based tool.
+
+---
 
 ## Ethical use
 
-Only use HeaderProbe on domains you own or have explicit permission to test. This tool is intended for security researchers and developers auditing their own systems.
+Only use HeaderProbe on domains you own or have explicit written permission to test.
+
+---
+
+## License
+
+MIT
