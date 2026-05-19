@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HeaderProbe v2.0 — Security Header & HTTP Analysis Tool
+HeaderProbe — Security Header & HTTP Analysis Tool
 Analyzes HTTP security headers, validates directives, checks cookie
 flags, and performs HTTP probing to raw curl for security assessments.
 """
