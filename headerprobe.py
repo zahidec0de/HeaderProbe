@@ -2,9 +2,7 @@
 """
 HeaderProbe v2.0 — Security Header & HTTP Analysis Tool
 Analyzes HTTP security headers, validates directives, checks cookie
-flags, and performs advanced HTTP probing superior to raw curl for
-security assessments.
-
+flags, and performs HTTP probing to raw curl for security assessments.
 """
 
 import sys
