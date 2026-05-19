@@ -925,7 +925,7 @@ def print_banner():
   ██╔══██║██╔══╝  ██╔══██║██║  ██║██╔══╝  ██╔══██╗
   ██║  ██║███████╗██║  ██║██████╔╝███████╗██║  ██║
   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝
-  P  R  O  B  E      v 2 . 0    ─ Enterprise Edition"""
+  P  R  O  B  E"""
     print(magenta(bold(banner)))
     print(f"\n  {amber('Security Header & HTTP Analysis Tool')}")
 
