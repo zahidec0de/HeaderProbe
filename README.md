@@ -95,20 +95,6 @@ python3 headerprobe.py
 
 ---
 
-## Headers checked
-
-High severity: Strict-Transport-Security, Content-Security-Policy
-
-Medium severity: X-Frame-Options, X-Content-Type-Options, Permissions-Policy, Cross-Origin-Opener-Policy, Cross-Origin-Resource-Policy, Cross-Origin-Embedder-Policy
-
-Low severity: Referrer-Policy, X-XSS-Protection, Cache-Control, Clear-Site-Data
-
-Deprecated (flagged separately): Expect-CT, Feature-Policy
-
-Information leakage: Server, X-Powered-By, X-AspNet-Version, X-AspNetMvc-Version, X-Generator, X-Drupal-Cache, X-Varnish, Via, X-Backend-Server, X-Forwarded-For, X-Forwarded-Host, X-CF-Powered-By, X-OWA-Version, MicrosoftSharePointTeamServices, X-Content-Encoded-By, Liferay-Portal
-
----
-
 ## Scoring
 
 Each present header earns points based on severity: HIGH = 30, MEDIUM = 15, LOW = 5. Penalties are applied for information-leaking headers (-5 each), directive errors (-3 each), and deprecated headers (-2 each).
