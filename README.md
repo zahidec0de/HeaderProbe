@@ -1,4 +1,4 @@
-# HeaderProbe v2.0
+# HeaderProbe
 
 ![HeaderProbe](headerprobe.png)
 
